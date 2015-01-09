@@ -1,0 +1,63 @@
+#!/bin/bash
+cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+
+yum update -y -q
+LANG=C yum groupinstall -y -q "LXDE Desktop"
+LANG=C yum groupinstall -y japanese-support
+LANG=C yum langinstall -y ja_JP
+yum install -y xrdp
+yum install -y firefox
+yum install -y git
+
+# add a student user
+useradd hands-on-stack
+echo "hands-on-stack:hands-on-stack"| chpasswd
+
+# set default desktop to LXDE
+su - hands-on-stack -c 'cp /etc/lxdm/Xsession ~/.Xclients'
+su - hands-on-stack -c 'mkdir -p ~/.config/pcmanfm/LXDE'
+
+# set default locale to ja
+su - hands-on-stack -c 'echo "export LANG=ja_JP.UTF-8" > ~/.xprofile'
+
+# disable screensavor
+su - hands-on-stack -c 'echo "mode:           off" > ~/.xscreensaver'
+su - hands-on-stack -c 'echo "selected:       -1" > ~/.xscreensaver'
+
+# clear wallpaper
+su - hands-on-stack -c 'touch ~/.config/pcmanfm/LXDE/desktop-items-0.conf'
+cat << EOF > /home/hands-on-stack/.config/pcmanfm/LXDE/desktop-items-0.conf
+[*]
+wallpaper_mode=color
+wallpaper_common=1
+wallpaper=/usr/share/backgrounds/images/default.png
+desktop_bg=#000000
+desktop_fg=#ffffff
+desktop_shadow=#000000
+desktop_font=Sans 12
+show_wm_menu=0
+sort=mtime;ascending;
+show_documents=0
+show_trash=1
+show_mounts=0
+EOF
+
+
+# add jp keyboard support to xrdp
+wget -O /etc/xrdp/km-0411.ini     http://www.mail-archive.com/xrdp-devel@lists.sourceforge.net/msg00263/km-e0010411.ini
+wget -O /etc/xrdp/km-e0010411.ini http://www.mail-archive.com/xrdp-devel@lists.sourceforge.net/msg00263/km-e0010411.ini
+wget -O /etc/xrdp/km-e0200411.ini http://www.mail-archive.com/xrdp-devel@lists.sourceforge.net/msg00263/km-e0010411.ini
+wget -O /etc/xrdp/km-e0210411.ini http://www.mail-archive.com/xrdp-devel@lists.sourceforge.net/msg00263/km-e0010411.ini
+
+systemctl start xrdp.service
+systemctl enable xrdp.service
+firewall-cmd --add-port=3389/tcp --permanent
+
+# installing openstack clients
+cd /root
+git clone https://github.com/josug-book1-materials/install_cli.git
+cd install_cli
+sh install.sh
+
+reboot
+
