@@ -9,24 +9,28 @@ yum install -y xrdp
 yum install -y firefox
 yum install -y git
 
-# add a student user
-useradd hands-on-stack
-echo "hands-on-stack:hands-on-stack"| chpasswd
+function handson-useradd () {
 
-# set default desktop to LXDE
-su - hands-on-stack -c 'cp /etc/lxdm/Xsession ~/.Xclients'
-su - hands-on-stack -c 'mkdir -p ~/.config/pcmanfm/LXDE'
+    add_usrename=$1
 
-# set default locale to ja
-su - hands-on-stack -c 'echo "export LANG=ja_JP.UTF-8" > ~/.xprofile'
+    # add a student user
+    useradd ${add_usrename}
+    echo "${add_usrename}:${add_usrename}-20150203"| chpasswd
 
-# disable screensavor
-su - hands-on-stack -c 'echo "mode:           off" > ~/.xscreensaver'
-su - hands-on-stack -c 'echo "selected:       -1" > ~/.xscreensaver'
+    # set default desktop to LXDE
+    su - ${add_usrename} -c 'cp /etc/lxdm/Xsession ~/.Xclients'
+    su - ${add_usrename} -c 'mkdir -p ~/.config/pcmanfm/LXDE'
+
+    # set default locale to ja
+    su - ${add_usrename} -c 'echo "export LANG=ja_JP.UTF-8" > ~/.xprofile'
+
+    # disable screensavor
+    su - ${add_usrename} -c 'echo "mode:           off" > ~/.xscreensaver'
+    su - ${add_usrename} -c 'echo "selected:       -1" > ~/.xscreensaver'
 
 # clear wallpaper
-su - hands-on-stack -c 'touch ~/.config/pcmanfm/LXDE/desktop-items-0.conf'
-cat << EOF > /home/hands-on-stack/.config/pcmanfm/LXDE/desktop-items-0.conf
+su - ${add_usrename} -c 'touch ~/.config/pcmanfm/LXDE/desktop-items-0.conf'
+cat << EOF > /home/${add_usrename}/.config/pcmanfm/LXDE/desktop-items-0.conf
 [*]
 wallpaper_mode=color
 wallpaper_common=1
@@ -42,6 +46,7 @@ show_trash=1
 show_mounts=0
 EOF
 
+}
 
 # add jp keyboard support to xrdp
 wget -O /etc/xrdp/km-0411.ini     http://www.mail-archive.com/xrdp-devel@lists.sourceforge.net/msg00263/km-e0010411.ini
@@ -58,6 +63,16 @@ cd /root
 git clone https://github.com/josug-book1-materials/install_cli.git
 cd install_cli
 sh install.sh
+
+
+# add admin user
+handson-useradd hands-on-admin
+
+# add student user
+for i in `seq -w 01 20`
+do
+    handson-useradd osdt0${i}
+done
 
 reboot
 
